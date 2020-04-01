@@ -47,4 +47,16 @@ private:
 	CString m_strUrl;
 	CString m_strUsername;
 	CListBox m_listFile;
+public:
+	afx_msg void OnBnClickedButtonQuery();
+	afx_msg void OnLbnSelchangeList1();
+private:
+	CEdit m_editUrl;
+	CEdit m_editUsername;
+public:
+	CEdit m_editPwd;
+	afx_msg void OnBnClickedButtonDownload();
+	BOOL Download(CString strSName, CString strDName);
+	BOOL Upload(CString strSName, CString strDName);
+	afx_msg void OnBnClickedButtonUpload();
 };

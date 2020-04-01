@@ -7,6 +7,7 @@
 #include "FtpClient.h"
 #include "FtpClientDlg.h"
 #include "afxdialogex.h"
+#include <afxinet.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -71,6 +72,9 @@ void CFtpClientDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT_URL, m_strUrl);
 	DDX_Text(pDX, IDC_EDIT_USERNAME, m_strUsername);
 	DDX_Control(pDX, IDC_LIST1, m_listFile);
+	DDX_Control(pDX, IDC_EDIT_URL, m_editUrl);
+	DDX_Control(pDX, IDC_EDIT_USERNAME, m_editUsername);
+	DDX_Control(pDX, IDC_EDIT_PWD, m_editPwd);
 }
 
 BEGIN_MESSAGE_MAP(CFtpClientDlg, CDialogEx)
@@ -78,6 +82,10 @@ BEGIN_MESSAGE_MAP(CFtpClientDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDC_BUTTON_QUIT, &CFtpClientDlg::OnBnClickedButtonQuit)
+	ON_BN_CLICKED(IDC_BUTTON_QUERY, &CFtpClientDlg::OnBnClickedButtonQuery)
+	ON_LBN_SELCHANGE(IDC_LIST1, &CFtpClientDlg::OnLbnSelchangeList1)
+	ON_BN_CLICKED(IDC_BUTTON_DOWNLOAD, &CFtpClientDlg::OnBnClickedButtonDownload)
+	ON_BN_CLICKED(IDC_BUTTON_UPLOAD, &CFtpClientDlg::OnBnClickedButtonUpload)
 END_MESSAGE_MAP()
 
 
@@ -113,6 +121,10 @@ BOOL CFtpClientDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
+	m_strUrl = TEXT("ftp://49.235.3.103");
+	m_strUsername = TEXT("uftp");
+	m_strPwd = TEXT("2382525abc");
+	UpdateData(FALSE);
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -172,4 +184,195 @@ void CFtpClientDlg::OnBnClickedButtonQuit()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	OnOK();
+}
+
+
+void CFtpClientDlg::OnBnClickedButtonQuery()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	CInternetSession* pSession=nullptr;
+	CFtpConnection* pConnection=nullptr;
+	CFtpFileFind* pFileFind = nullptr;
+	CString strFileName;
+	BOOL bContinue;
+	UpdateData(TRUE);
+	while (m_listFile.GetCount() != 0)
+		m_listFile.DeleteString(0);
+
+	pSession = new CInternetSession(AfxGetAppName(), 1, PRE_CONFIG_INTERNET_ACCESS);
+	try
+	{
+		pConnection = pSession->GetFtpConnection(m_strUrl, m_strUsername, m_strPwd);
+	}
+	catch (CInternetException * e)
+	{
+		e->Delete();
+		pConnection = nullptr;
+	}
+	if (pConnection != nullptr)
+	{
+		pFileFind = new CFtpFileFind(pConnection);
+		bContinue = pFileFind->FindFile(TEXT("*"));
+		while (bContinue)
+		{
+			strFileName = pFileFind->GetFileName();
+			if (pFileFind->IsDirectory())
+				strFileName = TEXT("[") + strFileName + TEXT("]");
+			m_listFile.AddString(strFileName);
+			bContinue = pFileFind->FindNextFile();
+		}
+		if (pFileFind != nullptr)
+		{
+			pFileFind->Close();
+			pFileFind = nullptr;
+		}
+	}
+	delete pFileFind;
+	if (pConnection != nullptr)
+	{
+		pConnection->Close();
+		delete pConnection;
+	}
+	delete pSession;
+}
+
+
+void CFtpClientDlg::OnLbnSelchangeList1()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	m_editUrl.EnableWindow(FALSE);
+	m_editUsername.EnableWindow(FALSE);
+	m_editPwd.EnableWindow(FALSE);
+	m_btnUpload.EnableWindow(FALSE);
+	m_btnQuery.EnableWindow(FALSE);
+	m_btnDownload.EnableWindow(FALSE);
+}
+
+
+void CFtpClientDlg::OnBnClickedButtonDownload()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	UpdateData(TRUE);
+	int nSel = m_listFile.GetCurSel();
+	CString strSourceName;
+	m_listFile.GetText(nSel, strSourceName);
+	if (strSourceName.GetAt(0) != '[')
+	{
+		CString strDestName;
+		CFileDialog dlg(FALSE, TEXT(""), TEXT("*.*"));
+		if (dlg.DoModal() == IDOK)
+		{
+			strDestName = dlg.GetPathName();
+			if (Download(strSourceName, strDestName))
+				AfxMessageBox(TEXT("下载成功！"));
+			else
+				AfxMessageBox(TEXT("下载失败！"));
+		}
+		else
+			AfxMessageBox(TEXT("请输入文件名！"));
+	}
+	else
+		AfxMessageBox(TEXT("不能下载目录！\n请重新选择"));
+
+	m_btnDownload.EnableWindow(FALSE);
+	m_editUrl.EnableWindow(TRUE);
+	m_editUsername.EnableWindow(TRUE);
+	m_editPwd.EnableWindow(TRUE);
+	m_btnUpload.EnableWindow(TRUE);
+	m_btnQuery.EnableWindow(TRUE);
+	m_btnDownload.EnableWindow(TRUE);
+
+}
+
+BOOL CFtpClientDlg::Download(CString strSName, CString strDName)
+{
+	CInternetSession* pSession;
+	CFtpConnection* pConnection = nullptr;
+	pSession = new CInternetSession(AfxGetAppName(), 1, PRE_CONFIG_INTERNET_ACCESS);
+	try
+	{
+		pConnection = pSession->GetFtpConnection(m_strUrl, m_strUsername, m_strPwd);
+	}
+	catch (CInternetException * e)
+	{
+		e->Delete();
+		pConnection = nullptr;
+		return FALSE;
+	}
+	if (pConnection != nullptr)
+	{
+		if (!pConnection->GetFile(strSName, strDName))
+		{
+			pConnection->Close();
+			delete pConnection;
+			delete pSession;
+			return FALSE;
+		}
+		pConnection->Close();
+		delete pConnection;
+		delete pSession;
+	}
+	return TRUE;
+}
+
+BOOL CFtpClientDlg::Upload(CString strSName, CString strDName)
+{
+	CInternetSession* pSession;
+	CFtpConnection* pConnection = nullptr;
+	pSession = new CInternetSession(AfxGetAppName(), 1, PRE_CONFIG_INTERNET_ACCESS);
+	try
+	{
+		pConnection = pSession->GetFtpConnection(m_strUrl, m_strUsername, m_strPwd);
+	}
+	catch (CInternetException * e)
+	{
+		e->Delete();
+		pConnection = nullptr;
+		return FALSE;
+	}
+	if (pConnection != nullptr)
+	{
+		if (!pConnection->PutFile(strSName, strDName))
+		{
+			pConnection->Close();
+			delete pConnection;
+			delete pSession;
+			return FALSE;
+		}
+		pConnection->Close();
+		delete pConnection;
+		delete pSession;
+	}
+	return TRUE;
+}
+
+
+void CFtpClientDlg::OnBnClickedButtonUpload()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	UpdateData(TRUE);
+	m_editUrl.EnableWindow(FALSE);
+	m_editUsername.EnableWindow(FALSE);
+	m_editPwd.EnableWindow(FALSE);
+	m_btnQuery.EnableWindow(FALSE);
+
+	CString strDestName;
+	CString strSourceName;
+	CFileDialog dlg(TRUE, TEXT(""), TEXT("*.*"));
+	if (dlg.DoModal() == IDOK)
+	{
+		strSourceName = dlg.GetPathName();
+		strDestName = dlg.GetFileName();
+		if (Upload(strSourceName, strDestName))
+			AfxMessageBox(TEXT("上传成功！"));
+		else
+			AfxMessageBox(TEXT("上传失败！"));
+	}
+	else
+		AfxMessageBox(TEXT("请输入文件名！"));
+	m_editUrl.EnableWindow(TRUE);
+	m_editUsername.EnableWindow(TRUE);
+	m_editPwd.EnableWindow(TRUE);
+	m_btnQuery.EnableWindow(TRUE);
+
 }

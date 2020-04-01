@@ -1,13 +1,2 @@
-<<<<<<< HEAD
-﻿  pch.cpp
-  FtpClient.cpp
-  FtpClientDlg.cpp
-  正在生成代码...
+﻿  FtpClientDlg.cpp
   FtpClient.vcxproj -> C:\Users\Lenovo\source\repos\FtpClient\Debug\FtpClient.exe
-=======
-﻿  pch.cpp
-  FtpClient.cpp
-  FtpClientDlg.cpp
-  正在生成代码...
-  FtpClient.vcxproj -> C:\Users\Lenovo\source\repos\FtpClient\Debug\FtpClient.exe
->>>>>>> 8c6be598ab286246ca74a2f843228daece979d0e
