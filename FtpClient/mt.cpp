@@ -98,14 +98,14 @@ UINT mtDownloadFile(LPVOID pParam)
 	return 0;
 }
 
-BOOL mtDownLoad(CString strUrl, CString strUserName, CString strPwd, CString strSName, CString strDName)
+BOOL mtDownLoad(CString strUrl, CString strUserName, CString strPwd, CString strName, CString strDName)
 {
 	CInternetSession* pSession;
 	CFtpConnection* pConnection = nullptr;
 	pSession = new CInternetSession(AfxGetAppName(), 1, PRE_CONFIG_INTERNET_ACCESS);
 	try
 	{
-		pConnection = pSession->GetFtpConnection(strUrl, strUsername, strPwd, 21, TRUE);
+		pConnection = pSession->GetFtpConnection(strUrl, strName, strPwd, 21, TRUE);
 	}
 	catch (CInternetException * e)
 	{
@@ -115,7 +115,7 @@ BOOL mtDownLoad(CString strUrl, CString strUserName, CString strPwd, CString str
 	}
 	if (pConnection != NULL)
 	{
-		if (!pConnection->GetFile(strSName, strDName))
+		if (!pConnection->GetFile(strName, strDName))
 		{
 			auto err = GetLastError();
 			DWORD  dwError, dwBufferLength;
@@ -139,3 +139,72 @@ BOOL mtDownLoad(CString strUrl, CString strUserName, CString strPwd, CString str
 	delete pSession;
 	return TRUE;
 }
+
+UINT mtUploadFile(LPVOID pParam)
+{
+	if (pParam == nullptr) AfxEndThread(NULL);
+	FTP_INFO* PP;
+	CListBox* pList;
+	CString strUrl;
+	CString strName;
+	CString strPwd;
+	PP = (FTP_INFO*)pParam;
+	pList = PP->pList;
+	strUrl = PP->strUrl;
+	strName = PP->strUsername;
+	strPwd = PP->strPwd;
+	CString strSourceName;
+	CString strDestName;
+	CFileDialog dlg(TRUE, TEXT(""), TEXT("*.*"));
+	if (dlg.DoModal() == IDOK)
+	{
+		strSourceName = dlg.GetPathName();
+		strDestName = dlg.GetFileName();
+		if (mtUpload(strUrl, strName, strPwd, strSourceName, strDestName))
+			AfxMessageBox(TEXT("上传成功。"));
+		else
+		{
+			AfxMessageBox(TEXT("上传失败。"));
+			return 1;
+		}
+	}
+	else
+	{
+		AfxMessageBox(TEXT("请选择文件。"));
+		return 1;
+	}
+	return 0;
+}
+BOOL mtUpload(CString strUrl, CString strName, CString strPwd, CString strSourcecName, CString strDestName)
+{
+	CInternetSession* pSession = nullptr;
+	CFtpConnection* pConnection = nullptr;
+	pSession = new CInternetSession(AfxGetAppName(), 1, PRE_CONFIG_INTERNET_ACCESS);
+	try
+	{
+		pConnection = pSession->GetFtpConnection(strUrl, strName, strPwd);
+	}
+	catch (CInternetException * e)
+	{
+		e->Delete();
+		pConnection = nullptr;
+		return 1;
+	}
+	if (pConnection != nullptr)
+	{
+		if (!pConnection->PutFile(strSourcecName, strDestName))
+		{
+			pConnection->Close();
+			delete pConnection;
+			delete pSession;
+			return FALSE;
+		}
+	}
+	if (pConnection != nullptr)
+	{
+		pConnection->Close();
+		delete pConnection;
+	}
+	delete pSession;
+	return TRUE;
+};
