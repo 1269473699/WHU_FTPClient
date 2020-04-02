@@ -5,6 +5,7 @@
 #include "pch.h"
 #include "framework.h"
 #include "FtpClient.h"
+#include "mt.h"
 #include "FtpClientDlg.h"
 
 #ifdef _DEBUG
