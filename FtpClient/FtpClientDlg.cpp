@@ -7,7 +7,6 @@
 #include "FtpClient.h"
 #include "FtpClientDlg.h"
 #include "afxdialogex.h"
-#include <afxinet.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

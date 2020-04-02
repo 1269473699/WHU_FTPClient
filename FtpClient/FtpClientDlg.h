@@ -4,7 +4,13 @@
 
 #pragma once
 
-
+typedef struct
+{
+	CListBox* pList;
+	CString strUrl;
+	CString strUsername;
+	CString strPwd;
+} FTP_INFO;
 // CFtpClientDlg 对话框
 class CFtpClientDlg : public CDialogEx
 {
