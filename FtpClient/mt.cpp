@@ -128,6 +128,14 @@ BOOL mtDownLoad(CString strUrl, CString strUserName, CString strPwd, CString str
 	}
 	if (pConnection != NULL)
 	{
+		CFtpFileFind* pFtpFFind = new CFtpFileFind(pConnection);
+		BOOL FtpFile = pFtpFFind->FindFile(strName);//在FTP上找到文件
+		FtpFile = pFtpFFind->FindNextFile();
+		int nFileSize = pFtpFFind->GetLength();
+		FILE_INFO* ptF = new FILE_INFO;
+		ptF->nFileSize = nFileSize;
+		ptF->strDName = strDName;
+		AfxGetMainWnd()->PostMessage(WM_DOWNLOAD_ST, (WPARAM)ptF);
 		if (!pConnection->GetFile(strName, strDName))
 		{
 			auto err = GetLastError();

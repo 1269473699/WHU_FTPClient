@@ -21,7 +21,7 @@
 #define IDC_TEXTDOWNLOAD                1009
 #define IDC_TEXT_DOWNLOAD               1009
 #define IDC_TEXT_PERCENT                1010
-
+#define IDC_PROGRESS1                   1011
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED

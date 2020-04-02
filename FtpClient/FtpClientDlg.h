@@ -5,6 +5,7 @@
 #pragma once
 #define WM_DOWNLOAD_FIN (WM_USER+100)
 #define WM_UPLOAD_FIN (WM_USER+101)
+#define WM_DOWNLOAD_ST (WM_UPLOAD_FIN+1)
 typedef struct
 {
 	CListBox* pList;
@@ -12,6 +13,11 @@ typedef struct
 	CString strUsername;
 	CString strPwd;
 } FTP_INFO;
+typedef struct
+{
+	CString strDName;
+	int nFileSize;
+}FILE_INFO;
 // CFtpClientDlg 对话框
 class CFtpClientDlg : public CDialogEx
 {
@@ -37,6 +43,7 @@ protected:
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
+	LRESULT OnDownloadStart(WPARAM wParam, LPARAM lParam);
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnBnClickedButtonQuit();
@@ -71,4 +78,6 @@ private:
 	CStatic m_stcDownload;
 	CStatic m_stcPercent;
 	CString m_strPercent;
+public:
+	CProgressCtrl m_pProCtrl;
 };

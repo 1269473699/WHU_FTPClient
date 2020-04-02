@@ -79,6 +79,7 @@ void CFtpClientDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_TEXT_DOWNLOAD, m_stcDownload);
 	DDX_Control(pDX, IDC_TEXT_PERCENT, m_stcPercent);
 	DDX_Text(pDX, IDC_TEXT_PERCENT, m_strPercent);
+	DDX_Control(pDX, IDC_PROGRESS1, m_pProCtrl);
 }
 
 BEGIN_MESSAGE_MAP(CFtpClientDlg, CDialogEx)
@@ -91,6 +92,7 @@ BEGIN_MESSAGE_MAP(CFtpClientDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_DOWNLOAD, &CFtpClientDlg::OnBnClickedButtonDownload)
 	ON_BN_CLICKED(IDC_BUTTON_UPLOAD, &CFtpClientDlg::OnBnClickedButtonUpload)
 	ON_MESSAGE(WM_DOWNLOAD_FIN, &CFtpClientDlg::OnDownloadFin)
+	ON_MESSAGE(WM_DOWNLOAD_ST, &CFtpClientDlg::OnDownloadStart)
 
 END_MESSAGE_MAP()
 
@@ -127,6 +129,7 @@ BOOL CFtpClientDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
+	::SetWindowLong(m_hWnd, GWL_STYLE, WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX);
 	m_strUrl = TEXT("49.235.3.103");
 	m_strUsername = TEXT("uftp");
 	m_strPwd = TEXT("2382525abc");
@@ -187,7 +190,28 @@ HCURSOR CFtpClientDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
-
+LRESULT CFtpClientDlg::OnDownloadStart(WPARAM wParam, LPARAM lParam)
+{
+	CFileStatus status;
+	FILE_INFO* fileInfo = (FILE_INFO*)wParam;
+	CString strDName = fileInfo->strDName;
+	int FtpFileSize = fileInfo->nFileSize;
+	int lSizeOfFile = 0;
+	CFile::GetStatus(strDName, status);
+	CProgressCtrl* speed = &m_pProCtrl;
+	CStatic* edit = &m_stcPercent;
+	CString str;
+	while (lSizeOfFile < FtpFileSize)
+	{
+		int pro = lSizeOfFile * 100 / FtpFileSize;
+		speed->SetPos(pro);
+		str.Format(L"%d%%", pro);
+		edit->SetWindowText(str);
+		CFile::GetStatus(strDName, status);
+		lSizeOfFile = status.m_size;
+	}
+	return 0;
+}
 
 void CFtpClientDlg::OnBnClickedButtonQuit()
 {
