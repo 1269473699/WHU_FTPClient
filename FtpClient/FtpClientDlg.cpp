@@ -57,7 +57,7 @@ CFtpClientDlg::CFtpClientDlg(CWnd* pParent /*=nullptr*/)
 	, m_strUrl(_T(""))
 	, m_strUsername(_T(""))
 {
-	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME2);
 }
 
 void CFtpClientDlg::DoDataExchange(CDataExchange* pDX)
@@ -121,7 +121,7 @@ BOOL CFtpClientDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
-	m_strUrl = TEXT("ftp://49.235.3.103");
+	m_strUrl = TEXT("49.235.3.103");
 	m_strUsername = TEXT("uftp");
 	m_strPwd = TEXT("2382525abc");
 	UpdateData(FALSE);
@@ -202,7 +202,7 @@ void CFtpClientDlg::OnBnClickedButtonQuery()
 	pSession = new CInternetSession(AfxGetAppName(), 1, PRE_CONFIG_INTERNET_ACCESS);
 	try
 	{
-		pConnection = pSession->GetFtpConnection(m_strUrl, m_strUsername, m_strPwd);
+		pConnection = pSession->GetFtpConnection(m_strUrl, m_strUsername, m_strPwd, 21, TRUE);
 	}
 	catch (CInternetException * e)
 	{
@@ -212,14 +212,14 @@ void CFtpClientDlg::OnBnClickedButtonQuery()
 	if (pConnection != nullptr)
 	{
 		pFileFind = new CFtpFileFind(pConnection);
-		bContinue = pFileFind->FindFile(TEXT("*"));
+		bContinue = pFileFind->FindFile();
 		while (bContinue)
 		{
+			bContinue = pFileFind->FindNextFile();
 			strFileName = pFileFind->GetFileName();
 			if (pFileFind->IsDirectory())
 				strFileName = TEXT("[") + strFileName + TEXT("]");
 			m_listFile.AddString(strFileName);
-			bContinue = pFileFind->FindNextFile();
 		}
 		if (pFileFind != nullptr)
 		{
@@ -245,7 +245,7 @@ void CFtpClientDlg::OnLbnSelchangeList1()
 	m_editPwd.EnableWindow(FALSE);
 	m_btnUpload.EnableWindow(FALSE);
 	m_btnQuery.EnableWindow(FALSE);
-	m_btnDownload.EnableWindow(FALSE);
+	m_btnDownload.EnableWindow(TRUE);
 }
 
 
@@ -258,8 +258,8 @@ void CFtpClientDlg::OnBnClickedButtonDownload()
 	m_listFile.GetText(nSel, strSourceName);
 	if (strSourceName.GetAt(0) != '[')
 	{
-		CString strDestName;
-		CFileDialog dlg(FALSE, TEXT(""), TEXT("*.*"));
+		CString strDestName = strSourceName;
+		CFileDialog dlg(FALSE, TEXT(""), strDestName);
 		if (dlg.DoModal() == IDOK)
 		{
 			strDestName = dlg.GetPathName();
@@ -280,7 +280,6 @@ void CFtpClientDlg::OnBnClickedButtonDownload()
 	m_editPwd.EnableWindow(TRUE);
 	m_btnUpload.EnableWindow(TRUE);
 	m_btnQuery.EnableWindow(TRUE);
-	m_btnDownload.EnableWindow(TRUE);
 
 }
 
@@ -291,7 +290,7 @@ BOOL CFtpClientDlg::Download(CString strSName, CString strDName)
 	pSession = new CInternetSession(AfxGetAppName(), 1, PRE_CONFIG_INTERNET_ACCESS);
 	try
 	{
-		pConnection = pSession->GetFtpConnection(m_strUrl, m_strUsername, m_strPwd);
+		pConnection = pSession->GetFtpConnection(m_strUrl, m_strUsername, m_strPwd, 21, TRUE);
 	}
 	catch (CInternetException * e)
 	{
@@ -303,6 +302,17 @@ BOOL CFtpClientDlg::Download(CString strSName, CString strDName)
 	{
 		if (!pConnection->GetFile(strSName, strDName))
 		{
+			auto err = GetLastError();
+			DWORD  dwError, dwBufferLength;
+			LPTSTR  strError; // 将储存欢迎信息          
+			// 获取欢迎信息   
+			if (!InternetGetLastResponseInfo(&dwError, NULL, &dwBufferLength))
+			{
+				strError = new TCHAR[dwBufferLength + 1];
+				InternetGetLastResponseInfo(&dwError, strError, &dwBufferLength);
+				AfxMessageBox(strError);
+				delete[] strError;
+			}
 			pConnection->Close();
 			delete pConnection;
 			delete pSession;
@@ -322,7 +332,7 @@ BOOL CFtpClientDlg::Upload(CString strSName, CString strDName)
 	pSession = new CInternetSession(AfxGetAppName(), 1, PRE_CONFIG_INTERNET_ACCESS);
 	try
 	{
-		pConnection = pSession->GetFtpConnection(m_strUrl, m_strUsername, m_strPwd);
+		pConnection = pSession->GetFtpConnection(m_strUrl, m_strUsername, m_strPwd,21,TRUE);
 	}
 	catch (CInternetException * e)
 	{
@@ -334,6 +344,17 @@ BOOL CFtpClientDlg::Upload(CString strSName, CString strDName)
 	{
 		if (!pConnection->PutFile(strSName, strDName))
 		{
+			auto err = GetLastError();
+			DWORD  dwError, dwBufferLength;
+			LPTSTR  strError; // 将储存欢迎信息          
+			// 获取欢迎信息   
+			if (!InternetGetLastResponseInfo(&dwError, NULL, &dwBufferLength))
+			{
+				strError = new TCHAR[dwBufferLength + 1];
+				InternetGetLastResponseInfo(&dwError, strError, &dwBufferLength);
+				AfxMessageBox(strError);
+				delete[] strError;
+			}
 			pConnection->Close();
 			delete pConnection;
 			delete pSession;
