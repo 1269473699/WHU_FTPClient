@@ -56,6 +56,7 @@ CFtpClientDlg::CFtpClientDlg(CWnd* pParent /*=nullptr*/)
 	, m_strPwd(_T(""))
 	, m_strUrl(_T(""))
 	, m_strUsername(_T(""))
+	, m_strPercent(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME2);
 }
@@ -75,6 +76,9 @@ void CFtpClientDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT_URL, m_editUrl);
 	DDX_Control(pDX, IDC_EDIT_USERNAME, m_editUsername);
 	DDX_Control(pDX, IDC_EDIT_PWD, m_editPwd);
+	DDX_Control(pDX, IDC_TEXT_DOWNLOAD, m_stcDownload);
+	DDX_Control(pDX, IDC_TEXT_PERCENT, m_stcPercent);
+	DDX_Text(pDX, IDC_TEXT_PERCENT, m_strPercent);
 }
 
 BEGIN_MESSAGE_MAP(CFtpClientDlg, CDialogEx)
@@ -86,6 +90,8 @@ BEGIN_MESSAGE_MAP(CFtpClientDlg, CDialogEx)
 	ON_LBN_SELCHANGE(IDC_LIST1, &CFtpClientDlg::OnLbnSelchangeList1)
 	ON_BN_CLICKED(IDC_BUTTON_DOWNLOAD, &CFtpClientDlg::OnBnClickedButtonDownload)
 	ON_BN_CLICKED(IDC_BUTTON_UPLOAD, &CFtpClientDlg::OnBnClickedButtonUpload)
+	ON_MESSAGE(WM_DOWNLOAD_FIN, &CFtpClientDlg::OnDownloadFin)
+
 END_MESSAGE_MAP()
 
 
@@ -124,6 +130,9 @@ BOOL CFtpClientDlg::OnInitDialog()
 	m_strUrl = TEXT("49.235.3.103");
 	m_strUsername = TEXT("uftp");
 	m_strPwd = TEXT("2382525abc");
+	m_btnDownload.EnableWindow(FALSE);
+	m_btnUpload.EnableWindow(FALSE);
+	m_btnPause.EnableWindow(FALSE);
 	UpdateData(FALSE);
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
@@ -198,6 +207,9 @@ void CFtpClientDlg::OnBnClickedButtonQuery()
 	while (m_listFile.GetCount() != 0)
 		m_listFile.DeleteString(0);
 	AfxBeginThread(mtQuery, pp);
+	m_btnDownload.EnableWindow(TRUE);
+	m_btnUpload.EnableWindow(TRUE);
+	m_btnPause.EnableWindow(TRUE);
 
 }
 
@@ -216,6 +228,8 @@ void CFtpClientDlg::OnLbnSelchangeList1()
 
 void CFtpClientDlg::OnBnClickedButtonDownload()
 {
+	m_btnDownload.EnableWindow(FALSE);
+	m_listFile.EnableWindow(FALSE);
 	// TODO: 在此添加控件通知处理程序代码
 	UpdateData(TRUE);
 	FTP_INFO* pp = new FTP_INFO;
@@ -224,13 +238,6 @@ void CFtpClientDlg::OnBnClickedButtonDownload()
 	pp->strPwd = m_strPwd;
 	pp->strUrl = m_strUrl;
 	AfxBeginThread(mtDownloadFile, pp);
-
-	m_btnDownload.EnableWindow(FALSE);
-	m_editUrl.EnableWindow(TRUE);
-	m_editUsername.EnableWindow(TRUE);
-	m_editPwd.EnableWindow(TRUE);
-	m_btnUpload.EnableWindow(TRUE);
-	m_btnQuery.EnableWindow(TRUE);
 
 }
 
@@ -249,10 +256,23 @@ void CFtpClientDlg::OnBnClickedButtonUpload()
 	pp->strPwd = m_strPwd;
 	pp->strUrl = m_strUrl;
 	AfxBeginThread(mtUploadFile, pp);
-
 	m_editUrl.EnableWindow(TRUE);
 	m_editUsername.EnableWindow(TRUE);
 	m_editPwd.EnableWindow(TRUE);
 	m_btnQuery.EnableWindow(TRUE);
 
+}
+
+
+LRESULT CFtpClientDlg::OnDownloadFin(WPARAM wParam, LPARAM lParam)
+{
+	// TODO: 在此处添加实现代码.
+	m_listFile.EnableWindow(TRUE);
+	m_btnDownload.EnableWindow(TRUE);
+	m_editUrl.EnableWindow(TRUE);
+	m_editUsername.EnableWindow(TRUE);
+	m_editPwd.EnableWindow(TRUE);
+	m_btnUpload.EnableWindow(TRUE);
+	m_btnQuery.EnableWindow(TRUE);
+	return 0;
 }

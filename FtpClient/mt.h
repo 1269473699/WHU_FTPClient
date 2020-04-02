@@ -1,4 +1,5 @@
 #pragma once
+class FtpClientDlg;
 UINT mtQuery(LPVOID pParam);
 UINT mtDownloadFile(LPVOID pParam);
 UINT mtUploadFile(LPVOID pParam);

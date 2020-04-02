@@ -3,7 +3,8 @@
 //
 
 #pragma once
-
+#define WM_DOWNLOAD_FIN (WM_USER+100)
+#define WM_UPLOAD_FIN (WM_USER+101)
 typedef struct
 {
 	CListBox* pList;
@@ -65,4 +66,9 @@ public:
 	BOOL Download(CString strSName, CString strDName);
 	BOOL Upload(CString strSName, CString strDName);
 	afx_msg void OnBnClickedButtonUpload();
+	LRESULT OnDownloadFin(WPARAM wParam, LPARAM lParam);
+private:
+	CStatic m_stcDownload;
+	CStatic m_stcPercent;
+	CString m_strPercent;
 };

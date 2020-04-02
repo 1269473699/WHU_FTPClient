@@ -89,6 +89,7 @@ UINT mtDownloadFile(LPVOID pParam)
 			else
 			{
 				AfxMessageBox(TEXT("下载失败！"));
+				AfxGetMainWnd()->SendMessage(WM_DOWNLOAD_FIN, 0, 0);
 				return 1;
 			}
 				
@@ -96,14 +97,17 @@ UINT mtDownloadFile(LPVOID pParam)
 		else
 		{
 			AfxMessageBox(TEXT("请输入文件名！"));
+			AfxGetMainWnd()->SendMessage(WM_DOWNLOAD_FIN, 0, 0);
 			return 2;
 		}
 	}
 	else
 	{
 		AfxMessageBox(TEXT("不能下载目录！\n请重新选择"));
+		AfxGetMainWnd()->SendMessage(WM_DOWNLOAD_FIN, 0, 0);
 		return 3;
 	}
+	AfxGetMainWnd()->SendMessage(WM_DOWNLOAD_FIN, 0, 0);
 	return 0;
 }
 
