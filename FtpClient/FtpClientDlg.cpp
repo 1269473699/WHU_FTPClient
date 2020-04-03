@@ -226,9 +226,10 @@ void CFtpClientDlg::OnBnClickedButtonQuery()
 	pp->strUsername = m_strUsername;
 	pp->strPwd = m_strPwd;
 	pp->strUrl = m_strUrl;
+	pp->strCurrentDir = m_strCurrentDir;
 	while (m_listFile.GetCount() != 0)
 		m_listFile.DeleteString(0);
-	AfxBeginThread(mtQuery, pp);
+	mtQuery(pp);
 
 }
 
@@ -262,6 +263,7 @@ void CFtpClientDlg::OnBnClickedButtonDownload()
 	pp->strCurrentDir = m_strCurrentDir;
 	m_pThreadDonwload = AfxBeginThread(mtDownloadFile, pp);
 
+
 }
 
 
@@ -278,6 +280,7 @@ void CFtpClientDlg::OnBnClickedButtonUpload()
 	pp->strUsername = m_strUsername;
 	pp->strPwd = m_strPwd;
 	pp->strUrl = m_strUrl;
+	pp->strCurrentDir = m_strCurrentDir;
 	AfxBeginThread(mtUploadFile, pp);
 	m_editUrl.EnableWindow(TRUE);
 	m_editUsername.EnableWindow(TRUE);
@@ -317,12 +320,14 @@ void CFtpClientDlg::OnBnClickedButtonPause()
 	if (bPauseBtnStat)
 	{   	
 		m_pThreadDonwload->SuspendThread();
+		m_pThreadProgress->SuspendThread();
 		m_btnPause.SetWindowText(TEXT("继续"));
 		bPauseBtnStat = !bPauseBtnStat;
 	}
 	else
 	{
 		m_pThreadDonwload->ResumeThread();
+		m_pThreadProgress->ResumeThread();
 		m_btnPause.SetWindowText(TEXT("暂停"));
 		bPauseBtnStat = !bPauseBtnStat;
 	}	
@@ -348,7 +353,7 @@ void CFtpClientDlg::OnBnClickedButtonLast()
 	}
 	else
 	{
-		AfxMessageBox(TEXT("当前未在某个目录中，或为根目录。"));
+		AfxMessageBox(TEXT("没有上一级目录！"));
 		return;
 	}
 	FTP_INFO* pp = new FTP_INFO;
@@ -357,8 +362,6 @@ void CFtpClientDlg::OnBnClickedButtonLast()
 	pp->strPwd = m_strPwd;
 	pp->strUrl = m_strUrl;
 	pp->strCurrentDir = m_strCurrentDir;
-
-	//AfxMessageBox(m_strCurrentDir);
 	while (m_listFile.GetCount() != 0)
 		m_listFile.DeleteString(0);
 	AfxBeginThread(mtQuery, pp);
@@ -371,24 +374,24 @@ void CFtpClientDlg::OnBnClickedButtonNext()
 	m_btnDownload.EnableWindow(FALSE);
 	if (m_listFile.GetCurSel() == -1)
 	{
-		AfxMessageBox(TEXT("没有选中项目。"));
+		AfxMessageBox(TEXT("请选择一个合法目录！"));
 		return;
 	}
 	CString selfile;
 	m_listFile.GetText(m_listFile.GetCurSel(), selfile);
-	if (selfile[0] == '[')
+	if (selfile[0] != '[')
 	{
-		selfile = selfile.Mid(1, selfile.GetLength() - 2);
-		m_strCurrentDir = m_strCurrentDir + "/" + selfile;
+		AfxMessageBox(TEXT("请选择一个合法目录！"));
+		return;
 	}
+	selfile = selfile.Mid(1, selfile.GetLength() - 2);
+	m_strCurrentDir = m_strCurrentDir + "/" + selfile;
 	FTP_INFO* pp = new FTP_INFO;
 	pp->pList = &m_listFile;
 	pp->strUsername = m_strUsername;
 	pp->strPwd = m_strPwd;
 	pp->strUrl = m_strUrl;
 	pp->strCurrentDir = m_strCurrentDir;
-	
-	//AfxMessageBox(m_strCurrentDir);
 	while (m_listFile.GetCount() != 0)
 		m_listFile.DeleteString(0);
 	AfxBeginThread(mtQuery, pp);

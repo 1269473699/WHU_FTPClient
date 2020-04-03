@@ -187,11 +187,12 @@ UINT mtUploadFile(LPVOID pParam)
 	CString strSourceName;
 	CString strDestName;
 	CFileDialog dlg(TRUE, TEXT(""), TEXT("*.*"));
+	CString strCurDir = PP->strCurrentDir;
 	if (dlg.DoModal() == IDOK)
 	{
 		strSourceName = dlg.GetPathName();
 		strDestName = dlg.GetFileName();
-		if (mtUpload(strUrl, strName, strPwd, strSourceName, strDestName))
+		if (mtUpload(strUrl, strName, strPwd, strSourceName, strDestName, strCurDir))
 			AfxMessageBox(TEXT("上传成功。"));
 		else
 		{
@@ -204,10 +205,11 @@ UINT mtUploadFile(LPVOID pParam)
 		AfxMessageBox(TEXT("请选择文件。"));
 		return 1;
 	}
+	mtQuery(pParam);
 	return 0;
 }
 
-BOOL mtUpload(CString strUrl, CString strName, CString strPwd, CString strSourcecName, CString strDestName)
+BOOL mtUpload(CString strUrl, CString strName, CString strPwd, CString strSourcecName, CString strDestName, CString strCurDir)
 {
 	CInternetSession* pSession = nullptr;
 	pSession = new CInternetSession(AfxGetAppName(), 1, PRE_CONFIG_INTERNET_ACCESS);
@@ -224,6 +226,7 @@ BOOL mtUpload(CString strUrl, CString strName, CString strPwd, CString strSource
 	}
 	if (pConnection != nullptr)
 	{
+		pConnection->SetCurrentDirectory(strCurDir);
 		if (!pConnection->PutFile(strSourcecName, strDestName))
 		{
 			pConnection->Close();
@@ -252,8 +255,8 @@ BOOL mtGetFile(CString strSourceName, CString strDestName, CFtpConnection* pConn
 	char* pBuf[1024];
 	while (nSrcSize > nDestSize)
 	{
-		cSrcFile->Read(pBuf, 1024);
-		cDestFile.Write(pBuf, 1024);
+		cSrcFile->Read(pBuf, 512);
+		cDestFile.Write(pBuf, 512);
 		nDestSize = cDestFile.GetLength();
 	}
 	return 0;
