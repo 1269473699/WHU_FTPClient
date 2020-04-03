@@ -10,6 +10,7 @@ UINT mtQuery(LPVOID pParam)
 	CString strUrl=PP->strUrl;
 	CString strUsername=PP->strUsername;
 	CString strPwd=PP->strPwd;
+	CString strCurDir = PP->strCurrentDir;	
 	CInternetSession* pSession;
 	CFtpConnection* pConnection=nullptr;
 	CFtpFileFind* pFileFind=nullptr;
@@ -27,6 +28,13 @@ UINT mtQuery(LPVOID pParam)
 	}
 	if (pConnection != nullptr)
 	{
+		if (!strCurDir.IsEmpty() && strCurDir.GetLength() != 0)
+		{
+			pConnection->SetCurrentDirectory(strCurDir);
+		}
+		CString strCurrentDir;
+		pConnection->GetCurrentDirectory(strCurrentDir);
+		AfxGetMainWnd()->PostMessage(WM_DIR_CHANGE, (WPARAM)&strCurrentDir);
 		pFileFind = new CFtpFileFind(pConnection);
 		bContinue = pFileFind->FindFile();
 		while (bContinue)
@@ -62,6 +70,7 @@ UINT mtDownloadFile(LPVOID pParam)
 	CString strUrl = PP->strUrl;
 	CString strUsername = PP->strUsername;
 	CString strPwd = PP->strPwd;
+	CString strCurDir = PP->strCurrentDir;
 	CInternetSession* pSession;
 	CFtpConnection* pConnection = nullptr;
 	pSession = new CInternetSession(AfxGetAppName(), 1, PRE_CONFIG_INTERNET_ACCESS);
@@ -84,7 +93,7 @@ UINT mtDownloadFile(LPVOID pParam)
 		if (dlg.DoModal() == IDOK)
 		{
 			strDestName = dlg.GetPathName();
-			if (mtDownLoad(strUrl, strUsername, strPwd, strSourceName, strDestName))
+			if (mtDownLoad(strUrl, strUsername, strPwd, strSourceName, strDestName, strCurDir))
 				AfxMessageBox(TEXT("下载成功！"));
 			else
 			{
@@ -111,7 +120,7 @@ UINT mtDownloadFile(LPVOID pParam)
 	return 0;
 }
 
-BOOL mtDownLoad(CString strUrl, CString strUserName, CString strPwd, CString strName, CString strDName)
+BOOL mtDownLoad(CString strUrl, CString strUserName, CString strPwd, CString strName, CString strDName, CString strCurDir)
 {
 	CInternetSession* pSession;
 	CFtpConnection* pConnection = nullptr;
@@ -128,6 +137,7 @@ BOOL mtDownLoad(CString strUrl, CString strUserName, CString strPwd, CString str
 	}
 	if (pConnection != NULL)
 	{
+		pConnection->SetCurrentDirectory(strCurDir);
 		CFtpFileFind* pFtpFFind = new CFtpFileFind(pConnection);
 		BOOL FtpFile = pFtpFFind->FindFile(strName);//在FTP上找到文件
 		FtpFile = pFtpFFind->FindNextFile();

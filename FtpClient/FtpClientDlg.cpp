@@ -94,7 +94,10 @@ BEGIN_MESSAGE_MAP(CFtpClientDlg, CDialogEx)
 	ON_MESSAGE(WM_DOWNLOAD_FIN, &CFtpClientDlg::OnDownloadFin)
 	ON_MESSAGE(WM_DOWNLOAD_ST, &CFtpClientDlg::OnDownloadStart)
 	ON_MESSAGE(WM_UPDATE_PROGESS, &CFtpClientDlg::OnUpdateProgress)
-
+	ON_MESSAGE(WM_DIR_CHANGE, &CFtpClientDlg::OnCurrentDirChange)
+	ON_BN_CLICKED(IDC_BUTTON_PAUSE, &CFtpClientDlg::OnBnClickedButtonPause)
+	ON_BN_CLICKED(IDC_BUTTON_LASTINDEX, &CFtpClientDlg::OnBnClickedButtonLast)
+	ON_BN_CLICKED(IDC_BUTTON_NEXTINDEX, &CFtpClientDlg::OnBnClickedButtonNext)
 END_MESSAGE_MAP()
 
 
@@ -197,7 +200,14 @@ LRESULT CFtpClientDlg::OnDownloadStart(WPARAM wParam, LPARAM lParam)
 	pp->fileInfo = *(FILE_INFO*)wParam;
 	pp->pcProgress = &m_pProCtrl;
 	pp->strPercent = &m_strPercent;
-	AfxBeginThread(mtUpdateProgress, pp);
+	m_pThreadProgress = AfxBeginThread(mtUpdateProgress, pp);
+	return 0;
+}
+
+LRESULT CFtpClientDlg::OnCurrentDirChange(WPARAM wParam, LPARAM lParam)
+{
+	CString* pstrDir = (CString*)wParam;
+	m_strCurrentDir = *pstrDir;
 	return 0;
 }
 
@@ -241,6 +251,7 @@ void CFtpClientDlg::OnBnClickedButtonDownload()
 {
 	m_btnDownload.EnableWindow(FALSE);
 	m_listFile.EnableWindow(FALSE);
+	m_btnPause.EnableWindow(TRUE);
 	// TODO: 在此添加控件通知处理程序代码
 	UpdateData(TRUE);
 	FTP_INFO* pp = new FTP_INFO;
@@ -248,7 +259,8 @@ void CFtpClientDlg::OnBnClickedButtonDownload()
 	pp->strUsername = m_strUsername;
 	pp->strPwd = m_strPwd;
 	pp->strUrl = m_strUrl;
-	AfxBeginThread(mtDownloadFile, pp);
+	pp->strCurrentDir = m_strCurrentDir;
+	m_pThreadDonwload = AfxBeginThread(mtDownloadFile, pp);
 
 }
 
@@ -278,6 +290,8 @@ void CFtpClientDlg::OnBnClickedButtonUpload()
 LRESULT CFtpClientDlg::OnDownloadFin(WPARAM wParam, LPARAM lParam)
 {
 	// TODO: 在此处添加实现代码.
+	m_pProCtrl.SetPos(0);
+	m_btnPause.EnableWindow(FALSE);
 	m_listFile.EnableWindow(TRUE);
 	m_btnDownload.EnableWindow(TRUE);
 	m_editUrl.EnableWindow(TRUE);
@@ -293,4 +307,89 @@ LRESULT CFtpClientDlg::OnUpdateProgress(WPARAM wParam, LPARAM lParam)
 	// TODO: 在此处添加实现代码.
 	UpdateData(FALSE);
 	return 0;
+}
+
+
+void CFtpClientDlg::OnBnClickedButtonPause()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	static BOOL bPauseBtnStat = TRUE;
+	if (bPauseBtnStat)
+	{   	
+		m_pThreadDonwload->SuspendThread();
+		m_btnPause.SetWindowText(TEXT("继续"));
+		bPauseBtnStat = !bPauseBtnStat;
+	}
+	else
+	{
+		m_pThreadDonwload->ResumeThread();
+		m_btnPause.SetWindowText(TEXT("暂停"));
+		bPauseBtnStat = !bPauseBtnStat;
+	}	
+}
+
+
+void CFtpClientDlg::OnBnClickedButtonLast()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	m_btnDownload.EnableWindow(FALSE);
+	int i = m_strCurrentDir.GetLength() - 1;
+	while (i >= 0)
+	{
+		if (m_strCurrentDir[i] == '/')
+		{
+			break;
+		}
+		--i;
+	}
+	if (i > 0)
+	{
+		m_strCurrentDir = m_strCurrentDir.Left(i);
+	}
+	else
+	{
+		AfxMessageBox(TEXT("当前未在某个目录中，或为根目录。"));
+		return;
+	}
+	FTP_INFO* pp = new FTP_INFO;
+	pp->pList = &m_listFile;
+	pp->strUsername = m_strUsername;
+	pp->strPwd = m_strPwd;
+	pp->strUrl = m_strUrl;
+	pp->strCurrentDir = m_strCurrentDir;
+
+	//AfxMessageBox(m_strCurrentDir);
+	while (m_listFile.GetCount() != 0)
+		m_listFile.DeleteString(0);
+	AfxBeginThread(mtQuery, pp);
+}
+
+
+void CFtpClientDlg::OnBnClickedButtonNext()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	m_btnDownload.EnableWindow(FALSE);
+	if (m_listFile.GetCurSel() == -1)
+	{
+		AfxMessageBox(TEXT("没有选中项目。"));
+		return;
+	}
+	CString selfile;
+	m_listFile.GetText(m_listFile.GetCurSel(), selfile);
+	if (selfile[0] == '[')
+	{
+		selfile = selfile.Mid(1, selfile.GetLength() - 2);
+		m_strCurrentDir = m_strCurrentDir + "/" + selfile;
+	}
+	FTP_INFO* pp = new FTP_INFO;
+	pp->pList = &m_listFile;
+	pp->strUsername = m_strUsername;
+	pp->strPwd = m_strPwd;
+	pp->strUrl = m_strUrl;
+	pp->strCurrentDir = m_strCurrentDir;
+	
+	//AfxMessageBox(m_strCurrentDir);
+	while (m_listFile.GetCount() != 0)
+		m_listFile.DeleteString(0);
+	AfxBeginThread(mtQuery, pp);
 }

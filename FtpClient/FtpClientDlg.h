@@ -7,6 +7,7 @@
 #define WM_UPLOAD_FIN (WM_USER+101)
 #define WM_DOWNLOAD_ST (WM_UPLOAD_FIN+1)
 #define WM_UPDATE_PROGESS (WM_DOWNLOAD_ST+1)
+#define WM_DIR_CHANGE (WM_UPDATE_PROGESS+1)
 
 typedef struct
 {
@@ -14,6 +15,7 @@ typedef struct
 	CString strUrl;
 	CString strUsername;
 	CString strPwd;
+	CString strCurrentDir;
 } FTP_INFO;
 
 typedef struct
@@ -54,6 +56,7 @@ protected:
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
 	LRESULT OnDownloadStart(WPARAM wParam, LPARAM lParam);
+	LRESULT OnCurrentDirChange(WPARAM wParam, LPARAM lParam);
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnBnClickedButtonQuit();
@@ -80,8 +83,8 @@ private:
 public:
 	CEdit m_editPwd;
 	afx_msg void OnBnClickedButtonDownload();
-	BOOL Download(CString strSName, CString strDName);
-	BOOL Upload(CString strSName, CString strDName);
+	//BOOL Download(CString strSName, CString strDName);
+	//BOOL Upload(CString strSName, CString strDName);
 	afx_msg void OnBnClickedButtonUpload();
 	LRESULT OnDownloadFin(WPARAM wParam, LPARAM lParam);
 private:
@@ -89,6 +92,12 @@ private:
 	CStatic m_stcPercent;
 	CString m_strPercent;
 public:
+	CWinThread* m_pThreadDonwload;
+	CWinThread* m_pThreadProgress;
 	CProgressCtrl m_pProCtrl;
 	LRESULT OnUpdateProgress(WPARAM wParam, LPARAM lParam);
+	afx_msg void OnBnClickedButtonPause();
+	afx_msg void OnBnClickedButtonNext();
+	afx_msg void OnBnClickedButtonLast();
+	CString m_strCurrentDir;
 };
