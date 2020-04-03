@@ -8,6 +8,7 @@
 #define WM_DOWNLOAD_ST (WM_UPLOAD_FIN+1)
 #define WM_UPDATE_PROGESS (WM_DOWNLOAD_ST+1)
 #define WM_DIR_CHANGE (WM_UPDATE_PROGESS+1)
+#define WM_UPDATE_UPLOADPRO (WM_DIR_CHANGE+1)
 
 typedef struct
 {
@@ -16,6 +17,10 @@ typedef struct
 	CString strUsername;
 	CString strPwd;
 	CString strCurrentDir;
+	CString* strPercent;
+	CProgressCtrl* pcProgress;
+	CString strFileName;
+	int nFileSize;
 } FTP_INFO;
 
 typedef struct
@@ -56,6 +61,7 @@ protected:
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
 	LRESULT OnDownloadStart(WPARAM wParam, LPARAM lParam);
+	LRESULT CFtpClientDlg::OnUplaodStart(WPARAM wParam, LPARAM lParam);
 	LRESULT OnCurrentDirChange(WPARAM wParam, LPARAM lParam);
 	DECLARE_MESSAGE_MAP()
 public:

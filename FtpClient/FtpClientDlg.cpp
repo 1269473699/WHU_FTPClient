@@ -94,6 +94,7 @@ BEGIN_MESSAGE_MAP(CFtpClientDlg, CDialogEx)
 	ON_MESSAGE(WM_DOWNLOAD_FIN, &CFtpClientDlg::OnDownloadFin)
 	ON_MESSAGE(WM_DOWNLOAD_ST, &CFtpClientDlg::OnDownloadStart)
 	ON_MESSAGE(WM_UPDATE_PROGESS, &CFtpClientDlg::OnUpdateProgress)
+	ON_MESSAGE(WM_UPDATE_UPLOADPRO, &CFtpClientDlg::OnUplaodStart)
 	ON_MESSAGE(WM_DIR_CHANGE, &CFtpClientDlg::OnCurrentDirChange)
 	ON_BN_CLICKED(IDC_BUTTON_PAUSE, &CFtpClientDlg::OnBnClickedButtonPause)
 	ON_BN_CLICKED(IDC_BUTTON_LASTINDEX, &CFtpClientDlg::OnBnClickedButtonLast)
@@ -204,6 +205,17 @@ LRESULT CFtpClientDlg::OnDownloadStart(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
+LRESULT CFtpClientDlg::OnUplaodStart(WPARAM wParam, LPARAM lParam)
+{	
+	FTP_INFO* pp = new FTP_INFO;
+	*pp = *(FTP_INFO*)wParam;
+	pp->pcProgress = &m_pProCtrl;
+	pp->strPercent = &m_strPercent;
+	m_pThreadProgress = AfxBeginThread(mtUpdateProgressUpload, pp);
+	return 0;
+}
+
+
 LRESULT CFtpClientDlg::OnCurrentDirChange(WPARAM wParam, LPARAM lParam)
 {
 	CString* pstrDir = (CString*)wParam;
@@ -242,7 +254,7 @@ void CFtpClientDlg::OnLbnSelchangeList1()
 	m_editUrl.EnableWindow(FALSE);
 	m_editUsername.EnableWindow(FALSE);
 	m_editPwd.EnableWindow(FALSE);
-	m_btnUpload.EnableWindow(FALSE);
+	m_btnUpload.EnableWindow(TRUE);
 	m_btnQuery.EnableWindow(FALSE);
 	m_btnDownload.EnableWindow(TRUE);
 }
@@ -282,6 +294,7 @@ void CFtpClientDlg::OnBnClickedButtonUpload()
 	pp->strUrl = m_strUrl;
 	pp->strCurrentDir = m_strCurrentDir;
 	AfxBeginThread(mtUploadFile, pp);
+	AfxGetMainWnd()->PostMessage(IDC_BUTTON_QUERY);
 	m_editUrl.EnableWindow(TRUE);
 	m_editUsername.EnableWindow(TRUE);
 	m_editPwd.EnableWindow(TRUE);

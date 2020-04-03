@@ -205,7 +205,6 @@ UINT mtUploadFile(LPVOID pParam)
 		AfxMessageBox(TEXT("请选择文件。"));
 		return 1;
 	}
-	mtQuery(pParam);
 	return 0;
 }
 
@@ -227,6 +226,16 @@ BOOL mtUpload(CString strUrl, CString strName, CString strPwd, CString strSource
 	if (pConnection != nullptr)
 	{
 		pConnection->SetCurrentDirectory(strCurDir);
+		FTP_INFO* ftpinfo = new FTP_INFO;
+		CFileStatus status;
+		CFile::GetStatus(strSourcecName, status);
+		ftpinfo->nFileSize = status.m_size;
+		ftpinfo->strUrl = strUrl;
+		ftpinfo->strUsername = strName;
+		ftpinfo->strPwd = strPwd;
+		ftpinfo->strCurrentDir = strCurDir;
+		ftpinfo->strFileName = strDestName;
+		AfxGetMainWnd()->PostMessageW(WM_UPDATE_UPLOADPRO,(WPARAM)ftpinfo);
 		if (!pConnection->PutFile(strSourcecName, strDestName))
 		{
 			pConnection->Close();
@@ -290,3 +299,52 @@ UINT mtUpdateProgress(LPVOID pParam)
 	return 0;
 }
 
+UINT mtUpdateProgressUpload(LPVOID pParam)
+{
+	CInternetSession* pSession;
+	CFtpConnection* pConnection = nullptr;
+	CFtpFileFind* pFtpFFind;
+	FTP_INFO* PP = (FTP_INFO*)pParam;
+	CString strUrl = PP->strUrl;
+	CString strUserName = PP->strUsername;
+	CString strPwd = PP->strPwd;
+	CString strCurDir = PP->strCurrentDir;
+	CProgressCtrl* pProCtrl = PP->pcProgress;
+	CString* strPercent = PP->strPercent;
+	CString strName = PP->strFileName;
+	int ftpFileSize = PP->nFileSize;
+	int lSizeOfFile = 0;
+	pSession = new CInternetSession(AfxGetAppName(), 1, PRE_CONFIG_INTERNET_ACCESS);
+	try
+	{
+		pConnection = pSession->GetFtpConnection(strUrl, strUserName, strPwd, 21, TRUE);
+	}
+	catch (CInternetException * e)
+	{
+		e->Delete();
+		pConnection = nullptr;
+		return FALSE;
+	}
+	if (pConnection != NULL)
+	{
+		pConnection->SetCurrentDirectory(strCurDir);
+		pFtpFFind = new CFtpFileFind(pConnection);
+		BOOL FtpFile = pFtpFFind->FindFile(strName);//在FTP上找到文件
+		FtpFile = pFtpFFind->FindNextFile();
+		lSizeOfFile = pFtpFFind->GetLength();
+		while (lSizeOfFile < ftpFileSize)
+		{
+			int pro = lSizeOfFile * 100 / ftpFileSize;
+			pProCtrl->SetPos(pro);
+			strPercent->Format(L"%d%%", pro);
+			AfxGetMainWnd()->PostMessage(WM_UPDATE_PROGESS);
+			FtpFile = pFtpFFind->FindFile(strName);//在FTP上找到文件
+			FtpFile = pFtpFFind->FindNextFile();
+			lSizeOfFile = pFtpFFind->GetLength();
+		}
+		*strPercent = TEXT("100%");
+		pProCtrl->SetPos(100);
+		AfxGetMainWnd()->PostMessage(WM_UPDATE_PROGESS);
+	}
+	return 0;
+}
