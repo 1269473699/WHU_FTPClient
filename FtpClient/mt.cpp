@@ -228,4 +228,38 @@ BOOL mtUpload(CString strUrl, CString strName, CString strPwd, CString strSource
 	}
 	delete pSession;
 	return TRUE;
-};
+}
+
+BOOL mtGetFile(CString strSourceName, CString strDestName, CFtpConnection* pConnection, int breakpoint)
+{
+	CInternetFile* cSrcFile = pConnection->OpenFile(strSourceName);
+	return 0;
+}
+
+UINT mtUpdateProgress(LPVOID pParam)
+{
+	if (pParam == NULL)
+		AfxEndThread(NULL);
+	PROGRESS_INFO* PP = (PROGRESS_INFO*)pParam;
+	CProgressCtrl* pcProgress = PP->pcProgress;
+	CFileStatus status;
+	FILE_INFO fileInfo = PP->fileInfo;
+	CString strDName = fileInfo.strDName;
+	CString* strPercent = PP->strPercent;
+	int ftpFileSize = fileInfo.nFileSize;
+	int lSizeOfFile = 0;
+	CFile::GetStatus(strDName, status);
+	CString str;
+	while (lSizeOfFile < ftpFileSize)
+	{
+		int pro = lSizeOfFile * 100 / ftpFileSize;
+		pcProgress->SetPos(pro);
+		strPercent->Format(L"%d%%", pro);
+		AfxGetMainWnd()->PostMessage(WM_UPDATE_PROGESS);
+		CFile::GetStatus(strDName, status);
+		lSizeOfFile = status.m_size;
+	}
+	*strPercent = TEXT("100%");
+	return 0;
+}
+

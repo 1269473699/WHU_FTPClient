@@ -6,6 +6,8 @@
 #define WM_DOWNLOAD_FIN (WM_USER+100)
 #define WM_UPLOAD_FIN (WM_USER+101)
 #define WM_DOWNLOAD_ST (WM_UPLOAD_FIN+1)
+#define WM_UPDATE_PROGESS (WM_DOWNLOAD_ST+1)
+
 typedef struct
 {
 	CListBox* pList;
@@ -13,11 +15,19 @@ typedef struct
 	CString strUsername;
 	CString strPwd;
 } FTP_INFO;
+
 typedef struct
 {
 	CString strDName;
 	int nFileSize;
 }FILE_INFO;
+
+typedef struct
+{
+	FILE_INFO fileInfo;
+	CString* strPercent;
+	CProgressCtrl* pcProgress;
+}PROGRESS_INFO;
 // CFtpClientDlg 对话框
 class CFtpClientDlg : public CDialogEx
 {
@@ -80,4 +90,5 @@ private:
 	CString m_strPercent;
 public:
 	CProgressCtrl m_pProCtrl;
+	LRESULT OnUpdateProgress(WPARAM wParam, LPARAM lParam);
 };

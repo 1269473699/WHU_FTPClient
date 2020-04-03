@@ -93,6 +93,7 @@ BEGIN_MESSAGE_MAP(CFtpClientDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_UPLOAD, &CFtpClientDlg::OnBnClickedButtonUpload)
 	ON_MESSAGE(WM_DOWNLOAD_FIN, &CFtpClientDlg::OnDownloadFin)
 	ON_MESSAGE(WM_DOWNLOAD_ST, &CFtpClientDlg::OnDownloadStart)
+	ON_MESSAGE(WM_UPDATE_PROGESS, &CFtpClientDlg::OnUpdateProgress)
 
 END_MESSAGE_MAP()
 
@@ -192,24 +193,11 @@ HCURSOR CFtpClientDlg::OnQueryDragIcon()
 
 LRESULT CFtpClientDlg::OnDownloadStart(WPARAM wParam, LPARAM lParam)
 {
-	CFileStatus status;
-	FILE_INFO* fileInfo = (FILE_INFO*)wParam;
-	CString strDName = fileInfo->strDName;
-	int FtpFileSize = fileInfo->nFileSize;
-	int lSizeOfFile = 0;
-	CFile::GetStatus(strDName, status);
-	CProgressCtrl* speed = &m_pProCtrl;
-	CStatic* edit = &m_stcPercent;
-	CString str;
-	while (lSizeOfFile < FtpFileSize)
-	{
-		int pro = lSizeOfFile * 100 / FtpFileSize;
-		speed->SetPos(pro);
-		str.Format(L"%d%%", pro);
-		edit->SetWindowText(str);
-		CFile::GetStatus(strDName, status);
-		lSizeOfFile = status.m_size;
-	}
+	PROGRESS_INFO* pp = new PROGRESS_INFO;
+	pp->fileInfo = *(FILE_INFO*)wParam;
+	pp->pcProgress = &m_pProCtrl;
+	pp->strPercent = &m_strPercent;
+	AfxBeginThread(mtUpdateProgress, pp);
 	return 0;
 }
 
@@ -231,9 +219,6 @@ void CFtpClientDlg::OnBnClickedButtonQuery()
 	while (m_listFile.GetCount() != 0)
 		m_listFile.DeleteString(0);
 	AfxBeginThread(mtQuery, pp);
-	m_btnDownload.EnableWindow(TRUE);
-	m_btnUpload.EnableWindow(TRUE);
-	m_btnPause.EnableWindow(TRUE);
 
 }
 
@@ -241,6 +226,8 @@ void CFtpClientDlg::OnBnClickedButtonQuery()
 void CFtpClientDlg::OnLbnSelchangeList1()
 {
 	// TODO: 在此添加控件通知处理程序代码
+	m_pProCtrl.SetPos(0);
+	m_stcPercent.SetWindowTextW(TEXT("0%"));
 	m_editUrl.EnableWindow(FALSE);
 	m_editUsername.EnableWindow(FALSE);
 	m_editPwd.EnableWindow(FALSE);
@@ -298,5 +285,12 @@ LRESULT CFtpClientDlg::OnDownloadFin(WPARAM wParam, LPARAM lParam)
 	m_editPwd.EnableWindow(TRUE);
 	m_btnUpload.EnableWindow(TRUE);
 	m_btnQuery.EnableWindow(TRUE);
+	return 0;
+}
+
+LRESULT CFtpClientDlg::OnUpdateProgress(WPARAM wParam, LPARAM lParam)
+{
+	// TODO: 在此处添加实现代码.
+	UpdateData(FALSE);
 	return 0;
 }
