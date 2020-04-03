@@ -34,7 +34,7 @@ UINT mtQuery(LPVOID pParam)
 		}
 		CString strCurrentDir;
 		pConnection->GetCurrentDirectory(strCurrentDir);
-		AfxGetMainWnd()->PostMessage(WM_DIR_CHANGE, (WPARAM)&strCurrentDir);
+		AfxGetMainWnd()->SendMessage(WM_DIR_CHANGE, (WPARAM)&strCurrentDir);
 		pFileFind = new CFtpFileFind(pConnection);
 		bContinue = pFileFind->FindFile();
 		while (bContinue)
