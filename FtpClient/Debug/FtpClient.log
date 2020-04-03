@@ -1,2 +1,4 @@
-﻿  FtpClientDlg.cpp
+﻿  mt.cpp
+C:\Users\Lenovo\source\repos\FtpClient\FtpClient\mt.cpp(134,17): warning C4244: “初始化”: 从“ULONGLONG”转换到“int”，可能丢失数据
+C:\Users\Lenovo\source\repos\FtpClient\FtpClient\mt.cpp(273,23): warning C4244: “=”: 从“ULONGLONG”转换到“int”，可能丢失数据
   FtpClient.vcxproj -> C:\Users\Lenovo\source\repos\FtpClient\Debug\FtpClient.exe

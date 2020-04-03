@@ -196,6 +196,7 @@ UINT mtUploadFile(LPVOID pParam)
 	}
 	return 0;
 }
+
 BOOL mtUpload(CString strUrl, CString strName, CString strPwd, CString strSourcecName, CString strDestName)
 {
 	CInternetSession* pSession = nullptr;
@@ -230,9 +231,21 @@ BOOL mtUpload(CString strUrl, CString strName, CString strPwd, CString strSource
 	return TRUE;
 }
 
-BOOL mtGetFile(CString strSourceName, CString strDestName, CFtpConnection* pConnection, int breakpoint)
+BOOL mtGetFile(CString strSourceName, CString strDestName, CFtpConnection* pConnection)
 {
 	CInternetFile* cSrcFile = pConnection->OpenFile(strSourceName);
+	CFile cDestFile(strDestName, CFile::modeNoTruncate | CFile::modeWrite);
+	cDestFile.SeekToEnd();
+	auto nDestSize = cDestFile.GetLength();
+	auto nSrcSize = cSrcFile->GetLength();
+	cSrcFile->Seek(nDestSize, CFile::begin);
+	char* pBuf[1024];
+	while (nSrcSize > nDestSize)
+	{
+		cSrcFile->Read(pBuf, 1024);
+		cDestFile.Write(pBuf, 1024);
+		nDestSize = cDestFile.GetLength();
+	}
 	return 0;
 }
 
@@ -260,6 +273,7 @@ UINT mtUpdateProgress(LPVOID pParam)
 		lSizeOfFile = status.m_size;
 	}
 	*strPercent = TEXT("100%");
+	AfxGetMainWnd()->PostMessage(WM_UPDATE_PROGESS);
 	return 0;
 }
 
