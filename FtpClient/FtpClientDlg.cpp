@@ -198,6 +198,7 @@ HCURSOR CFtpClientDlg::OnQueryDragIcon()
 
 LRESULT CFtpClientDlg::OnDownloadStart(WPARAM wParam, LPARAM lParam)
 {
+	m_btnPause.EnableWindow(TRUE);
 	PROGRESS_INFO* pp = new PROGRESS_INFO;
 	m_stcDownload.SetWindowTextW(TEXT("下载中:"));
 	pp->fileInfo = *(FILE_INFO*)wParam;
@@ -209,6 +210,7 @@ LRESULT CFtpClientDlg::OnDownloadStart(WPARAM wParam, LPARAM lParam)
 
 LRESULT CFtpClientDlg::OnUploadStart(WPARAM wParam, LPARAM lParam)
 {	
+	m_btnPause.EnableWindow(TRUE);
 	FTP_INFO* pp = new FTP_INFO;
 	m_stcDownload.SetWindowTextW(TEXT("上传中:"));
 	*pp = *(FTP_INFO*)wParam;
@@ -268,7 +270,7 @@ void CFtpClientDlg::OnBnClickedButtonDownload()
 	m_btnDownload.EnableWindow(FALSE);
 	m_listFile.EnableWindow(FALSE);
 	m_btnUpload.EnableWindow(FALSE);
-	m_btnPause.EnableWindow(TRUE);
+	m_btnPause.EnableWindow(FALSE);
 	// TODO: 在此添加控件通知处理程序代码
 	UpdateData(TRUE);
 	FTP_INFO* pp = new FTP_INFO;
@@ -298,7 +300,7 @@ void CFtpClientDlg::OnBnClickedButtonUpload()
 	pp->strPwd = m_strPwd;
 	pp->strUrl = m_strUrl;
 	pp->strCurrentDir = m_strCurrentDir;
-	AfxBeginThread(mtUploadFile, pp);
+	m_pThreadDonwload = AfxBeginThread(mtUploadFile, pp);
 }
 
 
