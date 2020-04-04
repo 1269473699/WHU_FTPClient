@@ -85,6 +85,12 @@ UINT mtDownloadFile(LPVOID pParam)
 	}
 	int nSel = pList->GetCurSel();
 	CString strSourceName;
+	if (nSel == -1)
+	{
+		AfxMessageBox(TEXT("请选择一个文件！"));
+		AfxGetMainWnd()->SendMessage(WM_DOWNLOAD_FIN, 0, 0);
+		return 2;
+	}
 	pList->GetText(nSel, strSourceName);
 	if (strSourceName.GetAt(0) != '[')
 	{
@@ -141,7 +147,7 @@ BOOL mtDownLoad(CString strUrl, CString strUserName, CString strPwd, CString str
 		CFtpFileFind* pFtpFFind = new CFtpFileFind(pConnection);
 		BOOL FtpFile = pFtpFFind->FindFile(strName);//在FTP上找到文件
 		FtpFile = pFtpFFind->FindNextFile();
-		int nFileSize = pFtpFFind->GetLength();
+		ULONGLONG nFileSize = pFtpFFind->GetLength();
 		FILE_INFO* ptF = new FILE_INFO;
 		ptF->nFileSize = nFileSize;
 		ptF->strDName = strDName;
@@ -197,14 +203,17 @@ UINT mtUploadFile(LPVOID pParam)
 		else
 		{
 			AfxMessageBox(TEXT("上传失败。"));
+			AfxGetMainWnd()->SendMessage(WM_UPLOAD_FIN, 0, 0);
 			return 1;
 		}
 	}
 	else
 	{
 		AfxMessageBox(TEXT("请选择文件。"));
+		AfxGetMainWnd()->SendMessage(WM_UPLOAD_FIN, 0, 0);
 		return 1;
 	}
+	AfxGetMainWnd()->SendMessage(WM_UPLOAD_FIN, 0, 0);
 	return 0;
 }
 
@@ -253,24 +262,6 @@ BOOL mtUpload(CString strUrl, CString strName, CString strPwd, CString strSource
 	return TRUE;
 }
 
-BOOL mtGetFile(CString strSourceName, CString strDestName, CFtpConnection* pConnection)
-{
-	CInternetFile* cSrcFile = pConnection->OpenFile(strSourceName);
-	CFile cDestFile(strDestName, CFile::modeNoTruncate | CFile::modeWrite);
-	cDestFile.SeekToEnd();
-	auto nDestSize = cDestFile.GetLength();
-	auto nSrcSize = cSrcFile->GetLength();
-	cSrcFile->Seek(nDestSize, CFile::begin);
-	char* pBuf[1024];
-	while (nSrcSize > nDestSize)
-	{
-		cSrcFile->Read(pBuf, 512);
-		cDestFile.Write(pBuf, 512);
-		nDestSize = cDestFile.GetLength();
-	}
-	return 0;
-}
-
 UINT mtUpdateProgress(LPVOID pParam)
 {
 	if (pParam == NULL)
@@ -281,13 +272,13 @@ UINT mtUpdateProgress(LPVOID pParam)
 	FILE_INFO fileInfo = PP->fileInfo;
 	CString strDName = fileInfo.strDName;
 	CString* strPercent = PP->strPercent;
-	int ftpFileSize = fileInfo.nFileSize;
-	int lSizeOfFile = 0;
+	ULONGLONG ftpFileSize = fileInfo.nFileSize;
+	ULONGLONG lSizeOfFile = 0;
 	CFile::GetStatus(strDName, status);
 	CString str;
 	while (lSizeOfFile < ftpFileSize)
 	{
-		int pro = lSizeOfFile * 100 / ftpFileSize;
+		ULONGLONG pro = lSizeOfFile * 100 / ftpFileSize;
 		pcProgress->SetPos(pro);
 		strPercent->Format(L"%d%%", pro);
 		AfxGetMainWnd()->PostMessage(WM_UPDATE_PROGESS);
@@ -301,6 +292,8 @@ UINT mtUpdateProgress(LPVOID pParam)
 
 UINT mtUpdateProgressUpload(LPVOID pParam)
 {
+	if (pParam == NULL)
+		AfxEndThread(NULL);
 	CInternetSession* pSession;
 	CFtpConnection* pConnection = nullptr;
 	CFtpFileFind* pFtpFFind;
@@ -312,8 +305,8 @@ UINT mtUpdateProgressUpload(LPVOID pParam)
 	CProgressCtrl* pProCtrl = PP->pcProgress;
 	CString* strPercent = PP->strPercent;
 	CString strName = PP->strFileName;
-	int ftpFileSize = PP->nFileSize;
-	int lSizeOfFile = 0;
+	auto ftpFileSize = PP->nFileSize;
+	ULONGLONG lSizeOfFile = 0;
 	pSession = new CInternetSession(AfxGetAppName(), 1, PRE_CONFIG_INTERNET_ACCESS);
 	try
 	{
@@ -334,7 +327,7 @@ UINT mtUpdateProgressUpload(LPVOID pParam)
 		lSizeOfFile = pFtpFFind->GetLength();
 		while (lSizeOfFile < ftpFileSize)
 		{
-			int pro = lSizeOfFile * 100 / ftpFileSize;
+			ULONGLONG pro = lSizeOfFile*100 / ftpFileSize;
 			pProCtrl->SetPos(pro);
 			strPercent->Format(L"%d%%", pro);
 			AfxGetMainWnd()->PostMessage(WM_UPDATE_PROGESS);

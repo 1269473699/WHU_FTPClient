@@ -92,9 +92,10 @@ BEGIN_MESSAGE_MAP(CFtpClientDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_DOWNLOAD, &CFtpClientDlg::OnBnClickedButtonDownload)
 	ON_BN_CLICKED(IDC_BUTTON_UPLOAD, &CFtpClientDlg::OnBnClickedButtonUpload)
 	ON_MESSAGE(WM_DOWNLOAD_FIN, &CFtpClientDlg::OnDownloadFin)
+	ON_MESSAGE(WM_UPLOAD_FIN, &CFtpClientDlg::OnUploadFin)
 	ON_MESSAGE(WM_DOWNLOAD_ST, &CFtpClientDlg::OnDownloadStart)
 	ON_MESSAGE(WM_UPDATE_PROGESS, &CFtpClientDlg::OnUpdateProgress)
-	ON_MESSAGE(WM_UPDATE_UPLOADPRO, &CFtpClientDlg::OnUplaodStart)
+	ON_MESSAGE(WM_UPDATE_UPLOADPRO, &CFtpClientDlg::OnUploadStart)
 	ON_MESSAGE(WM_DIR_CHANGE, &CFtpClientDlg::OnCurrentDirChange)
 	ON_BN_CLICKED(IDC_BUTTON_PAUSE, &CFtpClientDlg::OnBnClickedButtonPause)
 	ON_BN_CLICKED(IDC_BUTTON_LASTINDEX, &CFtpClientDlg::OnBnClickedButtonLast)
@@ -198,6 +199,7 @@ HCURSOR CFtpClientDlg::OnQueryDragIcon()
 LRESULT CFtpClientDlg::OnDownloadStart(WPARAM wParam, LPARAM lParam)
 {
 	PROGRESS_INFO* pp = new PROGRESS_INFO;
+	m_stcDownload.SetWindowTextW(TEXT("下载中:"));
 	pp->fileInfo = *(FILE_INFO*)wParam;
 	pp->pcProgress = &m_pProCtrl;
 	pp->strPercent = &m_strPercent;
@@ -205,9 +207,10 @@ LRESULT CFtpClientDlg::OnDownloadStart(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-LRESULT CFtpClientDlg::OnUplaodStart(WPARAM wParam, LPARAM lParam)
+LRESULT CFtpClientDlg::OnUploadStart(WPARAM wParam, LPARAM lParam)
 {	
 	FTP_INFO* pp = new FTP_INFO;
+	m_stcDownload.SetWindowTextW(TEXT("上传中:"));
 	*pp = *(FTP_INFO*)wParam;
 	pp->pcProgress = &m_pProCtrl;
 	pp->strPercent = &m_strPercent;
@@ -242,7 +245,7 @@ void CFtpClientDlg::OnBnClickedButtonQuery()
 	while (m_listFile.GetCount() != 0)
 		m_listFile.DeleteString(0);
 	mtQuery(pp);
-
+	m_btnUpload.EnableWindow(TRUE);
 }
 
 
@@ -264,6 +267,7 @@ void CFtpClientDlg::OnBnClickedButtonDownload()
 {
 	m_btnDownload.EnableWindow(FALSE);
 	m_listFile.EnableWindow(FALSE);
+	m_btnUpload.EnableWindow(FALSE);
 	m_btnPause.EnableWindow(TRUE);
 	// TODO: 在此添加控件通知处理程序代码
 	UpdateData(TRUE);
@@ -282,6 +286,7 @@ void CFtpClientDlg::OnBnClickedButtonDownload()
 void CFtpClientDlg::OnBnClickedButtonUpload()
 {
 	// TODO: 在此添加控件通知处理程序代码
+	m_btnUpload.EnableWindow(FALSE);
 	UpdateData(TRUE);
 	m_editUrl.EnableWindow(FALSE);
 	m_editUsername.EnableWindow(FALSE);
@@ -294,12 +299,6 @@ void CFtpClientDlg::OnBnClickedButtonUpload()
 	pp->strUrl = m_strUrl;
 	pp->strCurrentDir = m_strCurrentDir;
 	AfxBeginThread(mtUploadFile, pp);
-	AfxGetMainWnd()->PostMessage(IDC_BUTTON_QUERY);
-	m_editUrl.EnableWindow(TRUE);
-	m_editUsername.EnableWindow(TRUE);
-	m_editPwd.EnableWindow(TRUE);
-	m_btnQuery.EnableWindow(TRUE);
-
 }
 
 
@@ -315,6 +314,21 @@ LRESULT CFtpClientDlg::OnDownloadFin(WPARAM wParam, LPARAM lParam)
 	m_editPwd.EnableWindow(TRUE);
 	m_btnUpload.EnableWindow(TRUE);
 	m_btnQuery.EnableWindow(TRUE);
+	return 0;
+}
+
+LRESULT CFtpClientDlg::OnUploadFin(WPARAM wParam, LPARAM lParam)
+{
+	// TODO: 在此处添加实现代码.
+	m_pProCtrl.SetPos(0);
+	m_btnPause.EnableWindow(FALSE);
+	m_listFile.EnableWindow(TRUE);
+	m_editUrl.EnableWindow(TRUE);
+	m_editUsername.EnableWindow(TRUE);
+	m_editPwd.EnableWindow(TRUE);
+	m_btnUpload.EnableWindow(TRUE);
+	m_btnQuery.EnableWindow(TRUE);
+	OnBnClickedButtonQuery();
 	return 0;
 }
 

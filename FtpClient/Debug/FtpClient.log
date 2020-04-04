@@ -1,3 +1,4 @@
-﻿  FtpClientDlg.cpp
-C:\Users\Lenovo\source\repos\FtpClient\FtpClient\FtpClientDlg.cpp(209,23): error C2446: “==”: 没有从“nullptr”到“WPARAM”的转换
-C:\Users\Lenovo\source\repos\FtpClient\FtpClient\FtpClientDlg.cpp(209,16): message : 本机 nullptr 只能转换为 bool 或使用 reinterpret_cast 转换为整型
+﻿  mt.cpp
+C:\Users\Lenovo\source\repos\FtpClient\FtpClient\mt.cpp(282,22): warning C4244: “参数”: 从“ULONGLONG”转换到“int”，可能丢失数据
+C:\Users\Lenovo\source\repos\FtpClient\FtpClient\mt.cpp(331,21): warning C4244: “参数”: 从“ULONGLONG”转换到“int”，可能丢失数据
+  FtpClient.vcxproj -> C:\Users\Lenovo\source\repos\FtpClient\Debug\FtpClient.exe

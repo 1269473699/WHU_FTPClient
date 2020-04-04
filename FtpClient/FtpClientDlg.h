@@ -20,13 +20,13 @@ typedef struct
 	CString* strPercent;
 	CProgressCtrl* pcProgress;
 	CString strFileName;
-	int nFileSize;
+	ULONGLONG nFileSize;
 } FTP_INFO;
 
 typedef struct
 {
 	CString strDName;
-	int nFileSize;
+	ULONGLONG nFileSize;
 }FILE_INFO;
 
 typedef struct
@@ -61,7 +61,7 @@ protected:
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
 	LRESULT OnDownloadStart(WPARAM wParam, LPARAM lParam);
-	LRESULT CFtpClientDlg::OnUplaodStart(WPARAM wParam, LPARAM lParam);
+	LRESULT CFtpClientDlg::OnUploadStart(WPARAM wParam, LPARAM lParam);
 	LRESULT OnCurrentDirChange(WPARAM wParam, LPARAM lParam);
 	DECLARE_MESSAGE_MAP()
 public:
@@ -93,6 +93,7 @@ public:
 	//BOOL Upload(CString strSName, CString strDName);
 	afx_msg void OnBnClickedButtonUpload();
 	LRESULT OnDownloadFin(WPARAM wParam, LPARAM lParam);
+	LRESULT OnUploadFin(WPARAM wParam, LPARAM lParam);
 private:
 	CStatic m_stcDownload;
 	CStatic m_stcPercent;
